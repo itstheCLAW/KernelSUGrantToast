@@ -17,21 +17,13 @@ while true; do
     sleep 2
 done
 
-# Watch clock and restart at midnight
-while true; do
-    NOW=$(date +%H:%M)
-    if [ "$NOW" = "00:00" ]; then
-        exec sh $SCRIPT
-    fi
-    sleep 30
-done &
-
 # Find the most recently modified sulog file
 LOGFILE=$(ls -t $LOGDIR/sulog-*.log 2>/dev/null | head -1)
 if [ -z "$LOGFILE" ]; then
     LOGFILE=$LOGDIR/sulog-$(date +%Y-%m-%d).log
 fi
 
+# Start tail in background and track PID
 tail -F "$LOGFILE" | while read line; do
     case "$line" in
         *type=sucompat*) ;;
@@ -46,38 +38,30 @@ tail -F "$LOGFILE" | while read line; do
     uid="${uid%% *}"
 
     if [ -n "$uid" ] && [ "$uid" != "0" ]; then
-        # KSUN style - uid is the app uid
         pkg=$($GREP "uid:$uid" /data/adb/su-toast/pkglist.txt | $GREP -oP 'package:\K\S+')
     else
-        # ReSukiSU style - only process real su calls
         case "$line" in
             *file=\"/system/bin/su\"*) ;;
             *) continue ;;
         esac
 
-        # Extract comm value
         comm="${line#*comm=\"}"
         comm="${comm%%\"*}"
 
-        # Skip system/shell comms
         case "$comm" in
             sh|busybox|grep|awk|cat|head|tail|tr|init|zygote*) continue ;;
         esac
 
-        # Extract ppid
         ppid="${line#*ppid=}"
         ppid="${ppid%% *}"
 
         case "$comm" in
             DefaultDispatch|Thread*|BROWSE*|pool-*|bash)
-                # Generic thread name or bash - use ppid lookup
                 if [ -n "$ppid" ]; then
                     cmdline=$(cat /proc/$ppid/cmdline 2>/dev/null | tr '\0' ' ' | awk '{print $1}')
                     if [ -n "$cmdline" ]; then
-                        # If cmdline is a path under /data/data/, extract package name
                         case "$cmdline" in
                             /data/data/*)
-                                # Extract package name from path /data/data/PKGNAME/...
                                 cmdline="${cmdline#/data/data/}"
                                 cmdline="${cmdline%%/*}"
                                 ;;
@@ -87,7 +71,6 @@ tail -F "$LOGFILE" | while read line; do
                 fi
                 ;;
             *)
-                # Try comm as partial package name
                 pkg=$($GREP "$comm" /data/adb/su-toast/pkglist.txt | $GREP -oP 'package:\K\S+' | head -1)
                 ;;
         esac
@@ -95,7 +78,6 @@ tail -F "$LOGFILE" | while read line; do
 
     [ -z "$pkg" ] && continue
 
-    # If pkg is an addon, use base package instead
     case "$pkg" in
         *.addon.*)
             basepkg="${pkg%%.addon.*}"
@@ -119,4 +101,20 @@ tail -F "$LOGFILE" | while read line; do
     fi
     echo "$pkg" > /data/adb/su-toast/lastsu.txt
     echo "$now" > /data/adb/su-toast/lasttime.txt
+done &
+TAIL_PID=$!
+
+# Watch clock for midnight rollover and new log files
+while true; do
+    NOW=$(date +%H:%M)
+    if [ "$NOW" = "00:00" ]; then
+        pkill -f "tail -F $LOGFILE" 2>/dev/null
+        exec sh $SCRIPT
+    fi
+    NEWEST=$(ls -t $LOGDIR/sulog-*.log 2>/dev/null | head -1)
+    if [ "$NEWEST" != "$LOGFILE" ]; then
+        pkill -f "tail -F $LOGFILE" 2>/dev/null
+        exec sh $SCRIPT
+    fi
+    sleep 30
 done &

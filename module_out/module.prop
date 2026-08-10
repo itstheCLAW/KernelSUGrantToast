@@ -1,6 +1,6 @@
 id=ksuGrantToast
 name=KernelSU Next Toast
 author=NativeStar, itstheCLAW & Claude
-version=v3.1
-versionCode=21
+version=v3.2
+versionCode=22
 description=Show a root granted toast on KernelSU Next. Requires SuLog enabled. Compatible with KSUN, SukiSU and forks. By NativeStar, itstheCLAW & Claude.
