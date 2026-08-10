@@ -1,6 +1,6 @@
 # KernelSU Next Toast
 
-Show a root grant toast notification like Magisk on KernelSU Next and forks (KSUN, SukiSU, ReSukiSU).
+Show a root grant toast notification like Magisk on KernelSU Next and ReSukiSU (possibly SukiSU)
 
 Forked from https://github.com/NativeStar/KernelSUGrantToast
 Original author: NativeStar
@@ -9,40 +9,38 @@ Fork by: itstheCLAW & Claude (Anthropic)
 ## Screenshots
 
 
-![](./mdAssets/1000132279.png)
+![Termux toast on KSUN](./mdAssets/termux-toast.jpg)
 
 
 
 
-![](./mdAssets/1000130680.png)
-
+![Kernel Flasher toast on ReSukiSU](./mdAssets/kernel-flasher-toast.jpg)
 
 
 ## Features
 - Toast notification when an app is granted root
 - Package exclusion list via WebUI
-- Compatible with KSUN, SukiSU, ReSukiSU and forks
-- SuLog remains fully readable (unlike the original module)
+- Tested with KernelSU Next and ReSukiSU
+- SU Log remains readable
 - Midnight log rollover handled automatically
 
 ## Requirements
-- KernelSU Next, SukiSU, or ReSukiSU
-- SuLog must be enabled in your KSU manager
+- KernelSU Next or ReSukiSU
+- SU Log must be enabled in your root manager app
 - Does not require Zygisk or Meta Module
 
 ## Installation
 1. Download the module zip from Releases
-2. Open your KSU manager and flash the zip
-3. Ensure SuLog is enabled before rebooting
+2. Open your root  manager app and flash the zip
+3. Ensure SU Log is enabled before rebooting
 4. Reboot
 
 ## Configuration
-Open the module WebUI in your KSU manager to add apps to the exclusion list (takes effect immediately, no reboot needed) or change language and theme.
+Open the module WebUI in your root manager to add apps to the exclusion list (takes effect immediately, no reboot needed) or change language and theme.
 
 ## How It Works
-The original module worked by stealing the kernel sulog file descriptor from ksud, which broke SuLog readability and did not work on KSUN forks.
 
-This fork takes a different approach. A shell script (sulog_mirror.sh) tails the SuLog file directly. When a root grant is detected it resolves the package name and writes it to /data/adb/su-toast/lastsu.txt. The native daemon watches that file via inotify and displays the toast. SuLog remains fully readable and ksud is never killed.
+This fork takes a different approach than the original module. A shell script (sulog_mirror.sh) tails the sulog.txt file directly. When a root grant is detected it resolves the package name and writes it to /data/adb/su-toast/lastsu.txt. The native daemon watches that file via inotify and displays the toast. SU Log remains readable and ksud is never killed.
 
 For ReSukiSU compatibility, since all sucompat entries show uid=0, the script uses ppid-based process lookup to identify the requesting app.
 
@@ -55,8 +53,8 @@ For ReSukiSU compatibility, since all sucompat entries show uid=0, the script us
 
 ### v3.0
 - Complete rewrite of detection mechanism - file tail instead of kernel ioctl
-- KSUN/SukiSU/ReSukiSU compatibility
-- SuLog no longer broken after module install
+- KSUN/ReSukiSU compatibility
+- SU Log still readable after module install
 - Midnight log rollover via clock watcher
 - Package exclusion via WebUI (takes effect immediately, no reboot needed)
 - Moved data directory to /data/adb/su-toast/
