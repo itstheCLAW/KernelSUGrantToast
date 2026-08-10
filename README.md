@@ -1,48 +1,70 @@
-# KernelSU Grant Toast
-##### 让KernelSU像Magisk一样弹出'授予超级用户权限' Toast
-### 截图
+# KernelSU Next Toast
+
+Show a root grant toast notification like Magisk on KernelSU Next and forks (KSUN, SukiSU, ReSukiSU).
+
+Forked from https://github.com/NativeStar/KernelSUGrantToast
+Original author: NativeStar
+Fork by: itstheCLAW & Claude (Anthropic)
+
+## Screenshots
+
+
 ![](./mdAssets/1000132279.png)
+
+
+
+
 ![](./mdAssets/1000130680.png)
-### 功能
-- 在应用提权时弹出Toast提醒
-- 支持自定义提醒文本
-- 支持忽略指定应用的提权提醒
-### 安装
-在Release中下载模块包后进入KernelSU中选中模块包安装即可
 
-安装完成后需要重启生效 记得在重启前确保SuLog功能已启用
 
-该模块不依赖Zygisk和MetaModule
-### 兼容性提醒
-模块仅限最新(支持SuLog的版本)KernelSU使用 且仅在官方版本上测试
 
-对其他分支版本兼容性未知 理论上如果未对SuLog功能进行修改就能正常工作
-### 原理
-KernelSU在开启SuLog功能后 会拉起一个常驻的ksud进程用于接收由内核转发的日志数据并将其写入文件
+## Features
+- Toast notification when an app is granted root
+- Package exclusion list via WebUI
+- Compatible with KSUN, SukiSU, ReSukiSU and forks
+- SuLog remains fully readable (unlike the original module)
+- Midnight log rollover handled automatically
 
-该数据实时性极高 完全足够用作事件监测
+## Requirements
+- KernelSU Next, SukiSU, or ReSukiSU
+- SuLog must be enabled in your KSU manager
+- Does not require Zygisk or Meta Module
 
-安装模块后 当设备启动完成 模块将杀死原有负责日志写入的ksud进程并获取用于接收相关数据的文件描述符(该描述符只能被一个进程持有 故必须杀死ksud进程)接手事件处理
+## Installation
+1. Download the module zip from Releases
+2. Open your KSU manager and flash the zip
+3. Ensure SuLog is enabled before rebooting
+4. Reboot
 
-如果发现有Android应用被授予root权限 模块将获取该应用的相关信息 并在满足条件时弹出提醒
-### 注意
-由于原本负责写入日志文件的进程在设备启动完成后即被杀死 原本的SuLog将停止记录
+## Configuration
+Open the module WebUI in your KSU manager to add apps to the exclusion list (takes effect immediately, no reboot needed) or change language and theme.
 
-并且为避免文件堆积 在模块启动完成后会将旧的SuLog日志文件删除
+## How It Works
+The original module worked by stealing the kernel sulog file descriptor from ksud, which broke SuLog readability and did not work on KSUN forks.
 
-因此你将无法在管理器中查看SuLog数据
+This fork takes a different approach. A shell script (sulog_mirror.sh) tails the SuLog file directly. When a root grant is detected it resolves the package name and writes it to /data/adb/su-toast/lastsu.txt. The native daemon watches that file via inotify and displays the toast. SuLog remains fully readable and ksud is never killed.
 
-(理论上也可以不杀死进程 通过监听日志文件变化实现获取信息 但这么做性能可能不佳)
+For ReSukiSU compatibility, since all sucompat entries show uid=0, the script uses ppid-based process lookup to identify the requesting app.
 
-### 最后
-模块娱乐为主
+## Changelog
 
-感谢使用
+### v3.1 (current)
+- Add ppid-based lookup for ReSukiSU (DefaultDispatch, BROWSE_THREAD_1, pool-*, bash thread names)
+- Fix addon process resolution (MixPlorer addons now correctly show as MixPlorer)
+- Fix /data/data/ path resolution for Termux and similar apps
 
-<a href="https://www.star-history.com/?repos=NativeStar%2FKernelSUGrantToast&type=date&legend=top-left">
- <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=NativeStar/KernelSUGrantToast&type=date&theme=dark&legend=top-left" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=NativeStar/KernelSUGrantToast&type=date&legend=top-left" />
-   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=NativeStar/KernelSUGrantToast&type=date&legend=top-left" />
- </picture>
-</a>
+### v3.0
+- Complete rewrite of detection mechanism - file tail instead of kernel ioctl
+- KSUN/SukiSU/ReSukiSU compatibility
+- SuLog no longer broken after module install
+- Midnight log rollover via clock watcher
+- Package exclusion via WebUI (takes effect immediately, no reboot needed)
+- Moved data directory to /data/adb/su-toast/
+- Updated WebUI - removed unsupported options, added proper credits
+- Updated LICENSE with fork copyright notice
+
+## License
+MIT License - see LICENSE file
+
+Original work Copyright (c) 2024 NativeStar
+Modifications Copyright (c) 2026 itstheCLAW & Claude (Anthropic)
