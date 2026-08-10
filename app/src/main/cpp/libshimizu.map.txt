@@ -1,0 +1,9 @@
+{
+    global:
+      JNI_OnLoad;
+      Java_com_suisho_kernelsugranttoast_Entry_jniInit;
+      Java_com_suisho_kernelsugranttoast_Entry_jniSetUid;
+      Java_com_suisho_kernelsugranttoast_Entry_jniProcessSharedUidApplication;
+      Java_com_suisho_kernelsugranttoast_Entry_updatePackageSearchDepth;
+    local: *;
+  };
