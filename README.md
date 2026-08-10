@@ -45,21 +45,7 @@ This fork takes a different approach than the original module. A shell script (s
 For ReSukiSU compatibility, since all sucompat entries show uid=0, the script uses ppid-based process lookup to identify the requesting app.
 
 ## Changelog
-
-### v3.1 (current)
-- Add ppid-based lookup for ReSukiSU (DefaultDispatch, BROWSE_THREAD_1, pool-*, bash thread names)
-- Fix addon process resolution (MixPlorer addons now correctly show as MixPlorer)
-- Fix /data/data/ path resolution for Termux and similar apps
-
-### v3.0
-- Complete rewrite of detection mechanism - file tail instead of kernel ioctl
-- KSUN/ReSukiSU compatibility
-- SU Log still readable after module install
-- Midnight log rollover via clock watcher
-- Package exclusion via WebUI (takes effect immediately, no reboot needed)
-- Moved data directory to /data/adb/su-toast/
-- Updated WebUI - removed unsupported options, added proper credits
-- Updated LICENSE with fork copyright notice
+See [Releases](https://github.com/itstheCLAW/KernelSUGrantToast/releases) for full changelog.
 
 ## License
 MIT License - see LICENSE file
