@@ -4,3 +4,4 @@ author=NativeStar, itstheCLAW & Claude
 version=v3.3
 versionCode=23
 description=Show a root granted toast on KernelSU Next. Requires SuLog enabled. Compatible with KSUN, SukiSU and forks. By NativeStar, itstheCLAW & Claude.
+updateJson=https://raw.githubusercontent.com/itstheCLAW/KernelSUGrantToast/main/module_out/update.json
