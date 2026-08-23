@@ -18,9 +18,15 @@ while true; do
 done
 
 # Find the most recently modified sulog file
+# If date has changed since boot, wait for today's log file
+TODAY=$(date +%Y-%m-%d)
 LOGFILE=$(ls -t $LOGDIR/sulog-*.log 2>/dev/null | head -1)
-if [ -z "$LOGFILE" ]; then
-    LOGFILE=$LOGDIR/sulog-$(date +%Y-%m-%d).log
+if [ -z "$LOGFILE" ] || ! echo "$LOGFILE" | grep -q "$TODAY"; then
+    # Wait for today's log file to appear
+    while [ -z "$(ls $LOGDIR/sulog-$TODAY*.log 2>/dev/null)" ]; do
+        sleep 60
+    done
+    LOGFILE=$(ls -t $LOGDIR/sulog-$TODAY*.log 2>/dev/null | head -1)
 fi
 
 # Start tail in background and track PID
@@ -104,10 +110,11 @@ tail -F "$LOGFILE" | while read line; do
 done &
 TAIL_PID=$!
 
-# Watch clock for midnight rollover and new log files
+# Watch for date change and new log files
+START_DATE=$(date +%Y-%m-%d)
 while true; do
-    NOW=$(date +%H:%M)
-    if [ "$NOW" = "00:00" ]; then
+    NOW_DATE=$(date +%Y-%m-%d)
+    if [ "$NOW_DATE" != "$START_DATE" ]; then
         pkill -f "tail -F $LOGFILE" 2>/dev/null
         exec sh $SCRIPT
     fi
