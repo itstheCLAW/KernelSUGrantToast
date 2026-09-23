@@ -22,35 +22,38 @@ done
 TODAY=$(date +%Y-%m-%d)
 LOGFILE=$(ls -t $LOGDIR/sulog-*.log 2>/dev/null | head -1)
 if [ -z "$LOGFILE" ] || ! echo "$LOGFILE" | grep -q "$TODAY"; then
-    # Wait for today's log file to appear
     while [ -z "$(ls $LOGDIR/sulog-$TODAY*.log 2>/dev/null)" ]; do
         sleep 60
     done
     LOGFILE=$(ls -t $LOGDIR/sulog-$TODAY*.log 2>/dev/null | head -1)
 fi
 
-# Start tail in background and track PID
+# Start tail in background
 tail -F "$LOGFILE" | while read line; do
+    # Only process sucompat entries
     case "$line" in
         *type=sucompat*) ;;
         *) continue ;;
     esac
+
+    # Skip our own script subprocesses
     case "$line" in
         *comm=\"busybox\"*|*comm=\"sh\"*|*comm=\"grep\"*|*comm=\"awk\"*|*comm=\"cat\"*|*comm=\"head\"*|*comm=\"tail\"*|*comm=\"tr\"*) continue ;;
     esac
 
     pkg=""
+
+    # Extract uid
     uid="${line#*uid=}"
     uid="${uid%% *}"
 
     if [ -n "$uid" ] && [ "$uid" != "0" ]; then
+        # uid available - look up directly in pkglist
         pkg=$($GREP "uid:$uid" /data/adb/su-toast/pkglist.txt | $GREP -oP 'package:\K\S+')
-    else
-        case "$line" in
-            *file=\"/system/bin/su\"*) ;;
-            *) continue ;;
-        esac
+    fi
 
+    # If no pkg yet (uid=0 or lookup failed) use comm/ppid
+    if [ -z "$pkg" ]; then
         comm="${line#*comm=\"}"
         comm="${comm%%\"*}"
 
@@ -84,6 +87,7 @@ tail -F "$LOGFILE" | while read line; do
 
     [ -z "$pkg" ] && continue
 
+    # If pkg is an addon resolve to base package
     case "$pkg" in
         *.addon.*)
             basepkg="${pkg%%.addon.*}"
