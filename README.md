@@ -1,6 +1,6 @@
 # KernelSU Next Toast
 
-Show a root grant toast notification like Magisk on KernelSU Next and ReSukiSU (possibly SukiSU)
+Show a root grant toast notification like Magisk on KernelSU Next and ReSukiSU
 
 Forked from https://github.com/NativeStar/KernelSUGrantToast
 Original author: NativeStar
